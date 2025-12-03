@@ -1,0 +1,652 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/svg+xml" 
+      href='data:image/svg+xml;utf8,
+<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="%23FFFFFF">
+<path d="M320-240h60v-80h80v-60h-80v-80h-60v80h-80v60h80v80Zm200-30h200v-60H520v60Zm0-100h200v-60H520v60Zm44-152 56-56 56 56 42-42-56-58 56-56-42-42-56 56-56-56-42 42 56 56-56 58 42 42Zm-314-70h200v-60H250v60Zm-50 472q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/>
+</svg>'>
+
+  <title>Multimode Scientific Calculator</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      background:#0f0f10;
+      color:#fff;
+      font-family: Arial, Helvetica, sans-serif;
+      margin:0;
+      padding:16px;
+    }
+
+    .container {
+      max-width:900px;
+      margin:10px auto;
+    }
+
+    .tabs {
+      display:flex;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .tab {
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      background:#222;
+      color:#ddd;
+      transition: 0.2s;
+    }
+
+    .tab:hover { background:#333; }
+
+    .tab.active {
+      background:#cdbd8a;
+      color:#111;
+      font-weight:700;
+      box-shadow: 0 0 12px #cdbd8a;
+    }
+
+    .panel {
+      background:#141414;
+      padding:16px;
+      border-radius:12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+      margin-bottom:16px;
+      transition: 0.2s;
+    }
+
+    .display {
+      background:#1f1f1f;
+      padding:12px 16px;
+      font-size:44px;
+      text-align:right;
+      border-radius:12px;
+      border:1px solid #333;
+      margin-bottom:12px;
+      height:78px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      overflow-x:auto;
+      user-select: text;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+
+    .scientific-grid {
+      display:none;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.05);
+    }
+
+    .btn {
+      background:#2b2b2b;
+      border:none;
+      padding:16px;
+      font-size:20px;
+      color:#fff;
+      border-radius:12px;
+      cursor:pointer;
+      transition: 0.2s;
+      margin:3px;
+    }
+
+    .btn:hover {
+      background:#3a3a3a;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      transform: translateY(-2px);
+    }
+
+    .btn.equal {
+      background:#cdbd8a;
+      color:#111;
+      font-weight:700;
+      box-shadow: 0 0 12px #cdbd8a;
+    }
+
+    .wide {
+      grid-column: span 4;
+      padding:16px;
+      font-weight:bold;
+    }
+
+    .form-row {
+      display:flex;
+      gap:8px;
+      margin-bottom:8px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+
+    input[type=text], select {
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid #333;
+      background:#111;
+      color:#fff;
+    }
+
+    label { font-size:14px; color:#ddd; }
+    .small { font-size:14px; color:#ddd; }
+
+    .result-box {
+      background:#111;
+      padding:10px;
+      border-radius:8px;
+      border:1px solid #333;
+      min-height:34px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      flex-direction:column;
+      overflow-y:auto;
+      max-height:200px;
+    }
+
+    .footer { margin-top:12px; color:#999; font-size:13px; }
+
+    @media (max-width:600px){
+      .display{ font-size:28px; height:64px }
+      .btn{ font-size:18px; padding:12px }
+      .panel { padding:12px; }
+      .wide { font-size:16px; padding:12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <center><h2>SCIENTIFIC CALCULATOR</h2></center>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('calc')">CALCULATOR</div>
+      <div class="tab" onclick="switchTab('unit')">UNIT CONVERTER</div>
+      <div class="tab" onclick="switchTab('currency')">CURRENCY CONVERTER</div>
+    </div>
+
+    <!-- Calculator Panel -->
+    <div class="panel" id="panel-calc">
+      <div class="display" id="display">0</div>
+
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+        <button class="btn"  onclick="toggleScientific()">
+          <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="" fill="#FFFFFF">
+            <path d="M240-160v-80l260-240-260-240v-80h480v120H431l215 200-215 200h289v120H240Z"/>
+          </svg>
+               
+        </button>
+
+        <button class="btn" onclick="toggleDegRad()" id="degRadBtn">RAD</button>
+      </div>
+
+      <div class="scientific-grid" id="scientific_grid" aria-hidden="true">
+        <button class="btn" onclick="press('sin(')">sin</button>
+        <button class="btn" onclick="press('cos(')">cos</button>
+        <button class="btn" onclick="press('tan(')">tan</button>
+        <button class="btn" onclick="press('asin(')">asin</button>
+        <button class="btn" onclick="press('acos(')">acos</button>
+        <button class="btn" onclick="press('atan(')">atan</button>
+        <button class="btn" onclick="press('ln(')">ln</button>
+        <button class="btn" onclick="press('log10(')">log</button>
+        <button class="btn" onclick="press('sqrt(')">√</button>
+        <button class="btn" onclick="press('factorial(')">n!</button>
+      </div>
+
+      <div class="grid" aria-hidden="false">
+        <button class="btn" onclick="press('%')">%</button>
+        <button class="btn" onclick="press('CE')">CE</button>
+        <button class="btn" onclick="press('C')">C</button>
+        <button class="btn" onclick="press('⌫')">⌫</button>
+        <button class="btn" onclick="press('/')">÷</button>
+        <button class="btn" onclick="press('*')">×</button>
+        <button class="btn" onclick="press('-')">−</button>
+        <button class="btn" onclick="press('+')">+</button>
+        <button class="btn" onclick="press('7')">7</button>
+        <button class="btn" onclick="press('8')">8</button>
+        <button class="btn" onclick="press('9')">9</button>
+        <button class="btn" onclick="press('**')">^</button>
+        <button class="btn" onclick="press('4')">4</button>
+        <button class="btn" onclick="press('5')">5</button>
+        <button class="btn" onclick="press('6')">6</button>
+        <button class="btn equal" onclick="calculate()">=</button>
+        <button class="btn" onclick="press('1')">1</button>
+        <button class="btn" onclick="press('2')">2</button>
+        <button class="btn" onclick="press('3')">3</button>
+        <button class="btn" onclick="press('0')">0</button>
+        <button class="btn" onclick="press('.')">.</button>
+        <button class="btn" onclick="press('+/-')">+/-</button>
+      </div>
+
+      <div class="form-row" style="margin-top:12px;">
+        <button class="btn" id="calcHistoryBtn" onclick="toggleCalcHistory()" title="Toggle history">
+          <svg id="calcHistorySVG" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="#FFFFFF">
+            <path d="M480-80q-155 0-269-103T82-440h81q15 121 105.5 200.5T480-160q134 0 227-93t93-227q0-134-93-227t-227-93q-86 0-159.5 42.5T204-640h116v80H88q29-140 139-230t253-90q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm112-232L440-464v-216h80v184l128 128-56 56Z"/>
+          </svg>
+          &nbsp;History
+        </button>
+        <div class="result-box" id="history_box" style="display:none;"></div>
+        <button class="btn" onclick="clearHistory()">Clear History</button>
+      </div>
+    </div>
+
+    <!-- Unit Converter Panel -->
+    <div class="panel" id="panel-unit" style="display:none;">
+      <div class="form-row">
+        <label>Category:</label>
+        <select id="unit_category" onchange="updateUnitFields();">
+          <option value="length">Length</option>
+          <option value="weight">Weight</option>
+          <option value="temperature">Temperature</option>
+          <option value="volume">Volume</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>From:</label>
+        <select id="unit_from"></select>
+        <label>To:</label>
+        <select id="unit_to"></select>
+      </div>
+      <div class="form-row">
+        <label>Value:</label>
+        <input type="text" id="unit_value" placeholder="Enter number">
+        <button class="btn" onclick="convertUnit()">Convert</button>
+      </div>
+      <div class="form-row">
+        <label>Result:</label>
+        <div class="result-box" id="unit_result"></div>
+      </div>
+      <div class="form-row">
+        <button class="btn" onclick="toggleUnitHistory()">History</button>
+        <div class="result-box" id="unit_history_box" style="display:none;"></div>
+        <button class="btn" onclick="clearUnitHistory()">Clear History</button>
+      </div>
+    </div>
+
+    <!-- Currency Converter Panel -->
+    <div class="panel" id="panel-currency" style="display:none;">
+      <div class="form-row">
+        <label>Amount:</label>
+        <input type="text" id="currency_amount" placeholder="0.00">
+      </div>
+      <div class="form-row">
+        <label>From:</label>
+        <select id="from_currency"></select>
+        <label>To:</label>
+        <select id="to_currency"></select>
+      </div>
+      <div class="form-row">
+        <button class="btn" onclick="convertCurrency()">Convert</button>
+        <button class="btn" onclick="fetchRates()">Refresh Rates</button>
+      </div>
+      <div class="form-row">
+        <label>Result:</label>
+        <div class="result-box" id="currency_result"></div>
+      </div>
+      <div class="form-row">
+        <button class="btn" onclick="toggleCurrencyHistory()">History</button>
+        <div class="result-box" id="currency_history_box" style="display:none;"></div>
+        <button class="btn" onclick="clearCurrencyHistory()">Clear History</button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+let calcDisplay = "0";
+let modeRad = true;
+let liveRates = null;
+let activeTab = "calc"; // track which tab is active for ENTER handling
+
+// Initialize localStorage history
+let calcHistory = JSON.parse(localStorage.getItem('calcHistory')) || [];
+let unitHistory = JSON.parse(localStorage.getItem('unitHistory')) || [];
+let currencyHistory = JSON.parse(localStorage.getItem('currencyHistory')) || [];
+
+// ------------------ Keyboard Input ------------------
+document.addEventListener('keydown', function(e) {
+    const allowedKeys = "0123456789+-*/().%";
+
+    if (allowedKeys.includes(e.key)) {
+        // Only append to calculator display when calc tab active
+        if (activeTab === "calc") {
+            calcDisplay = calcDisplay === '0' ? e.key : calcDisplay + e.key;
+            document.getElementById('display').innerText = calcDisplay;
+        }
+    } 
+    else if (e.key === 'Enter') {
+        // Handle Enter based on active tab
+        if (activeTab === "calc") calculate();
+        else if (activeTab === "unit") convertUnit();
+        else if (activeTab === "currency") convertCurrency();
+    } 
+    else if (e.key === 'Backspace') {
+        if (activeTab === "calc") {
+            calcDisplay = calcDisplay.slice(0, -1) || '0';
+            document.getElementById('display').innerText = calcDisplay;
+        } else {
+            // let default behavior remove characters in focused input
+        }
+    } 
+    else if (e.key === 'Delete') {
+        if (activeTab === "calc") {
+            calcDisplay = '0';
+            document.getElementById('display').innerText = calcDisplay;
+        }
+    }
+    else if (e.key === 'Escape') {
+        if (activeTab === "calc") {
+            calcDisplay = '0';
+            document.getElementById('display').innerText = calcDisplay;
+        }
+    }
+});
+
+
+// ------------------ Calculator Functions ------------------
+function press(val){
+  if(val==='C' || val==='CE'){ calcDisplay='0'; }
+  else if(val==='⌫'){ calcDisplay=calcDisplay.slice(0,-1) || '0'; }
+  else if(val==='+/-'){ calcDisplay = (parseFloat(calcDisplay)*-1).toString(); }
+  else{ calcDisplay = calcDisplay==='0'?val:calcDisplay+val; }
+  document.getElementById('display').innerText=calcDisplay;
+}
+
+function factorial(n){
+  if(n<0) return NaN;
+  let f=1; for(let i=2;i<=n;i++) f*=i;
+  return f;
+}
+
+function calculate(){
+  try{
+    let expr = calcDisplay;
+
+    // Replace trig + handle deg/rad
+    if (!modeRad) {
+        expr = expr.replace(/sin\(([^)]+)\)/g, (_, v) => `Math.sin((${v}) * Math.PI / 180)`);
+        expr = expr.replace(/cos\(([^)]+)\)/g, (_, v) => `Math.cos((${v}) * Math.PI / 180)`);
+        expr = expr.replace(/tan\(([^)]+)\)/g, (_, v) => `Math.tan((${v}) * Math.PI / 180)`);
+    } else {
+        expr = expr.replace(/sin\(/g, "Math.sin(");
+        expr = expr.replace(/cos\(/g, "Math.cos(");
+        expr = expr.replace(/tan\(/g, "Math.tan(");
+    }
+
+    expr = expr.replace(/factorial\(([^)]+)\)/g, (_, v) => `factorial(${v})`);
+
+    // Safety check for obvious injection attempts
+    if(/window|document|constructor|__proto__/.test(expr)) throw 'Unsafe';
+
+    let result = eval(expr);
+    addCalcHistory(calcDisplay + ' = ' + result);
+    calcDisplay = result.toString();
+    document.getElementById('display').innerText = result;
+  } catch(e) {
+    document.getElementById('display').innerText='Error';
+  }
+}
+
+// ------------------ Scientific Toggle ------------------
+function toggleScientific(){
+  const grid = document.getElementById('scientific_grid');
+  // reliable single-click toggle
+  grid.style.display = (grid.style.display === 'grid') ? 'none' : 'grid';
+}
+
+function toggleDegRad() {
+    modeRad = !modeRad;
+    document.getElementById("degRadBtn").innerText = modeRad ? "RAD" : "DEG";
+}
+
+// ------------------ History ------------------
+function renderCalcHistory(){
+  document.getElementById('history_box').innerHTML = calcHistory.join('<br>');
+}
+function addCalcHistory(entry){
+  calcHistory.push(entry);
+  localStorage.setItem('calcHistory', JSON.stringify(calcHistory));
+  if(document.getElementById('history_box').style.display !== 'none') renderCalcHistory();
+}
+function toggleCalcHistory(){
+  const box = document.getElementById('history_box');
+  const svgIcon = document.getElementById('calcHistorySVG');
+  if(box.style.display==='none' || box.style.display===''){
+    renderCalcHistory();
+    box.style.display='block';
+    // change icon to 'open' variant (keeps style)
+    svgIcon.style.transform = 'rotate(0deg)';
+  } else {
+    box.style.display='none';
+    svgIcon.style.transform = 'rotate(0deg)';
+  }
+}
+function clearHistory(){
+  calcHistory = [];
+  localStorage.setItem('calcHistory', JSON.stringify(calcHistory));
+  renderCalcHistory();
+}
+
+// ------------------ Unit Converter ------------------
+const units = {
+  length: { m:1, km:1000, cm:0.01, mm:0.001, inch:0.0254, ft:0.3048, yd:0.9144, mi:1609.344 },
+  weight: { kg:1, g:0.001, mg:0.000001, lb:0.453592, oz:0.0283495 },
+  temperature: { C:'C', F:'F', K:'K' },
+  volume: { l:1, ml:0.001, m3:1000, gallon:3.78541, pint:0.473176 }
+};
+
+function updateUnitFields(){
+  const category = document.getElementById('unit_category').value;
+  const from = document.getElementById('unit_from');
+  const to = document.getElementById('unit_to');
+  from.innerHTML=''; to.innerHTML='';
+  for(const key in units[category]){
+    from.innerHTML += `<option value="${key}">${key}</option>`;
+    to.innerHTML += `<option value="${key}">${key}</option>`;
+  }
+}
+
+function renderUnitHistory(){
+  document.getElementById('unit_history_box').innerHTML = unitHistory.join('<br>');
+}
+function addUnitHistory(entry){
+  unitHistory.push(entry);
+  localStorage.setItem('unitHistory', JSON.stringify(unitHistory));
+  if(document.getElementById('unit_history_box').style.display !== 'none') renderUnitHistory();
+}
+function toggleUnitHistory(){
+  const box = document.getElementById('unit_history_box');
+  if(box.style.display==='none' || box.style.display==='') { renderUnitHistory(); box.style.display='block'; }
+  else { box.style.display='none'; }
+}
+function clearUnitHistory(){
+  unitHistory = [];
+  localStorage.setItem('unitHistory', JSON.stringify(unitHistory));
+  renderUnitHistory();
+}
+
+function convertUnit(){
+  const category = document.getElementById('unit_category').value;
+  const from = document.getElementById('unit_from').value;
+  const to = document.getElementById('unit_to').value;
+  const val = parseFloat(document.getElementById('unit_value').value);
+  if(isNaN(val)){ document.getElementById('unit_result').innerText='Invalid'; return; }
+  let result;
+  if(category==='temperature'){
+    if(from==='C'){ if(to==='F') result=val*9/5+32; else if(to==='K') result=val+273.15; else result=val; }
+    if(from==='F'){ if(to==='C') result=(val-32)*5/9; else if(to==='K') result=(val-32)*5/9+273.15; else result=val; }
+    if(from==='K'){ if(to==='C') result=val-273.15; else if(to==='F') result=(val-273.15)*9/5+32; else result=val; }
+  } else {
+    result = val * units[category][from] / units[category][to];
+  }
+
+  // Format unit result with separators and decent precision
+  let formatted;
+  if (Number.isFinite(result)) {
+    formatted = Number(result).toLocaleString(undefined, { maximumFractionDigits: 6 });
+  } else {
+    formatted = 'Error';
+  }
+
+  document.getElementById('unit_result').innerText = formatted + (category !== 'temperature' ? ` ${to}` : '');
+  addUnitHistory(`${val} ${from} = ${formatted} ${to}`);
+}
+
+// ------------------ Currency Converter ------------------
+
+// currency symbol map (auto-symbol based on currency code)
+const CURRENCY_SYMBOLS = {
+  "USD":"$","EUR":"€","GBP":"£","INR":"₹","JPY":"¥","AUD":"A$","CAD":"C$",
+  "CHF":"CHF","CNY":"¥","HKD":"HK$","SGD":"S$","NZD":"NZ$","KRW":"₩","BRL":"R$",
+  "ZAR":"R","RUB":"₽","SEK":"kr","NOK":"kr","DKK":"kr","MXN":"Mex$","TRY":"₺",
+  "IDR":"Rp","MYR":"RM","THB":"฿","PHP":"₱","AED":"د.إ","SAR":"﷼","ILS":"₪","PLN":"zł",
+  "CZK":"Kč","HUF":"Ft","CLP":"CLP$","COP":"COL$","VND":"₫","PEN":"S/","ARS":"AR$",
+  "EGP":"E£","NGN":"₦","KWD":"KD","BHD":"BD","OMR":"ر.ع","BDT":"৳"
+};
+
+// fallback list for initial population (matches fallback rates in backend)
+const FALLBACK_CURRENCY_LIST = [
+  "EUR","USD","INR","GBP","JPY","AUD","CAD","CHF","CNY","HKD","SGD","NZD",
+  "KRW","BRL","ZAR","RUB","SEK","NOK","DKK","MXN","TRY","IDR","MYR","THB",
+  "PHP","AED","SAR","ILS","PLN","CZK","HUF","CLP","COP","VND","PEN","ARS",
+  "EGP","NGN","KWD","BHD","OMR","BDT"
+];
+
+function renderCurrencyHistory(){ document.getElementById('currency_history_box').innerHTML = currencyHistory.join('<br>'); }
+function addCurrencyHistory(entry){
+  currencyHistory.push(entry);
+  localStorage.setItem('currencyHistory', JSON.stringify(currencyHistory));
+  if(document.getElementById('currency_history_box').style.display !== 'none') renderCurrencyHistory();
+}
+function toggleCurrencyHistory(){
+  const box = document.getElementById('currency_history_box');
+  if(box.style.display==='none' || box.style.display==='') { renderCurrencyHistory(); box.style.display='block'; }
+  else { box.style.display='none'; }
+}
+function clearCurrencyHistory(){
+  currencyHistory=[];
+  localStorage.setItem('currencyHistory', JSON.stringify(currencyHistory));
+  renderCurrencyHistory();
+}
+
+// Populate currency dropdowns using /rates endpoint
+async function fetchRates(){
+  try{
+    const resp = await fetch('/rates');
+    const data = await resp.json();
+    if(data && data.success && data.rates && Object.keys(data.rates).length > 0){
+      liveRates = data.rates;
+      // ensure EUR present as base with value 1.0 if not present
+      if (!liveRates.EUR) liveRates.EUR = 1.0;
+      const list = Object.keys(liveRates).sort();
+      populateCurrencySelectors(list);
+    } else {
+      // fallback: request succeeded but no rates -> use fallback list (backend already provides fallback, but guard here too)
+      liveRates = {};
+      FALLBACK_CURRENCY_LIST.forEach(c => { liveRates[c] = 1.0; });
+      populateCurrencySelectors(FALLBACK_CURRENCY_LIST);
+    }
+  } catch(e){
+    // network or fetch failure -> use fallback values
+    liveRates = {
+      "EUR":1.0,"USD":1.07,"INR":89.0,"GBP":0.86,"JPY":157.0,"AUD":1.62,"CAD":1.36,
+      "CHF":0.95,"CNY":7.63,"HKD":8.36,"SGD":1.45,"NZD":1.75,"KRW":1420.0,"BRL":5.32,
+      "ZAR":19.0,"RUB":95.0,"SEK":11.0,"NOK":11.5,"DKK":7.45,"MXN":18.5,"TRY":36.0,
+      "IDR":18000.0,"MYR":4.80,"THB":38.0,"PHP":58.0,"AED":3.94,"SAR":4.01,"ILS":3.90,
+      "PLN":4.30,"CZK":24.5,"HUF":420.0,"CLP":980.0,"COP":4200.0,"VND":27000.0,"PEN":3.80,
+      "ARS":110.0,"EGP":48.0,"NGN":900.0,"KWD":0.33,"BHD":0.40,"OMR":0.42,"BDT":119.0
+    };
+    populateCurrencySelectors(Object.keys(liveRates).sort());
+  }
+}
+
+function populateCurrencySelectors(list){
+  const from = document.getElementById('from_currency');
+  const to = document.getElementById('to_currency');
+  // try preserve selection if possible
+  const prevFrom = from.value || 'USD';
+  const prevTo = to.value || 'EUR';
+  from.innerHTML = ''; to.innerHTML = '';
+  list.forEach(code => {
+    const opt1 = document.createElement('option'); opt1.value = code; opt1.text = code;
+    const opt2 = document.createElement('option'); opt2.value = code; opt2.text = code;
+    from.appendChild(opt1); to.appendChild(opt2);
+  });
+  if ([...from.options].some(o=>o.value===prevFrom)) from.value = prevFrom;
+  if ([...to.options].some(o=>o.value===prevTo)) to.value = prevTo;
+}
+
+// Use liveRates for conversion; ensure rates are loaded first
+async function convertCurrency(){
+  const from = document.getElementById('from_currency').value;
+  const to = document.getElementById('to_currency').value;
+  const amount = parseFloat(document.getElementById('currency_amount').value);
+  if(isNaN(amount)){ document.getElementById('currency_result').innerText='Invalid amount'; return; }
+
+  // Ensure we have rates
+  if (!liveRates) {
+    await fetchRates();
+  }
+
+  if(!liveRates){
+    document.getElementById('currency_result').innerText='Rates not loaded';
+    return;
+  }
+  if(!(from in liveRates) || !(to in liveRates)){
+    document.getElementById('currency_result').innerText='Rate missing for selected currency';
+    return;
+  }
+
+  // Convert using rates: result = (amount / rate[from]) * rate[to]
+  const resultRaw = (amount / liveRates[from]) * liveRates[to];
+
+  // Format result with symbol if available (Option A: symbol only)
+  const symbol = CURRENCY_SYMBOLS[to] || '';
+  // Use Intl.NumberFormat for grouping/decimals (2 decimal places for fiat)
+  let formattedNumber;
+  // Some currencies (like JPY) often have 0 decimal places; simple heuristic:
+  const zeroDecimalCurrencies = ['JPY','KRW','VND','CLP','COP','IDR'];
+  const fractionDigits = zeroDecimalCurrencies.includes(to) ? 0 : 2;
+  try {
+    formattedNumber = new Intl.NumberFormat(undefined, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(resultRaw);
+  } catch(e) {
+    formattedNumber = resultRaw.toFixed(fractionDigits);
+  }
+
+  // If symbol includes letters (e.g., "CHF"), place symbol after number for readability
+  const symbolAfter = ['CHF','DKK','SEK','NOK','PLN','HUF','CZK'];
+  const display = (symbol && !symbolAfter.includes(to)) ? `${symbol}${formattedNumber}` : `${formattedNumber}${symbol ? ' ' + symbol : ''}`;
+
+  document.getElementById('currency_result').innerText = display;
+  addCurrencyHistory(`${amount} ${from} = ${display} (${to})`);
+}
+
+// ------------------ Tabs ------------------
+function switchTab(tab){
+  activeTab = tab;
+  document.getElementById('panel-calc').style.display = tab==='calc'?'block':'none';
+  document.getElementById('panel-unit').style.display = tab==='unit'?'block':'none';
+  document.getElementById('panel-currency').style.display = tab==='currency'?'block':'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
+}
+
+// Initial setup
+updateUnitFields();
+// Pre-populate currency selectors with fallback list quickly so UI isn't empty
+populateCurrencySelectors(FALLBACK_CURRENCY_LIST);
+// Asynchronously fetch live rates to replace the fallback list when available
+fetchRates();
+
+// Do not render histories until toggled; initial calls will keep them hidden
+</script>
+</body>
+</html>
